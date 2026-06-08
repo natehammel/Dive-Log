@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dive Log">
+  <meta name="theme-color" content="#0D2B45">
+  <title>Dive Log</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="log" onclick="showView('log')">
+      <span class="nav-icon">📋</span><span class="nav-label">Log</span>
+    </button>
+    <button class="nav-btn" data-view="add" onclick="showView('add')">
+      <span class="nav-icon">＋</span><span class="nav-label">Add Dive</span>
+    </button>
+    <button class="nav-btn" data-view="stats" onclick="showView('stats')">
+      <span class="nav-icon">📊</span><span class="nav-label">Stats</span>
+    </button>
+  </nav>
+
+  <!-- LOG -->
+  <div id="view-log" class="view active">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="header-icon">🤿</span>
+        <div>
+          <div class="header-title">Dive Log</div>
+          <div class="header-sub" id="log-sub">Loading…</div>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="exportCSV()">⬇️</button>
+    </header>
+    <div class="filter-bar">
+      <button class="chip active" onclick="setFilter('all',this)">All</button>
+      <button class="chip" onclick="setFilter('AUS',this)">🇦🇺 AUS</button>
+      <button class="chip" onclick="setFilter('INDO',this)">🇮🇩 INDO</button>
+      <button class="chip" onclick="setFilter('USA',this)">🇺🇸 USA</button>
+      <button class="chip" onclick="setFilter('night',this)">🌙 Night</button>
+      <button class="chip" onclick="setFilter('wreck',this)">⚓ Wreck</button>
+      <button class="chip" onclick="setFilter('nitrox',this)">🟢 Nitrox</button>
+    </div>
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="Search locations, sites…" oninput="renderLog()">
+    </div>
+    <div id="log-list" class="log-list"></div>
+  </div>
+
+  <!-- ADD -->
+  <div id="view-add" class="view">
+    <header class="app-header">
+      <div class="header-left">
+        <button class="back-btn hidden" id="back-btn" onclick="cancelEdit()">‹</button>
+        <div>
+          <div class="header-title" id="form-title">Log a Dive</div>
+          <div class="header-sub">Fill in the details</div>
+        </div>
+      </div>
+    </header>
+    <form id="dive-form" class="dive-form" onsubmit="return false">
+      <input type="hidden" id="edit-id">
+      <div class="form-section">
+        <div class="section-lbl">📅 When &amp; Where</div>
+        <div class="form-row"><label>Date *</label><input type="date" id="f-date" required></div>
+        <div class="form-row"><label>Country</label>
+          <select id="f-country">
+            <option value="AUS">🇦🇺 Australia</option>
+            <option value="INDO">🇮🇩 Indonesia</option>
+            <option value="USA">🇺🇸 United States</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Location</label><input type="text" id="f-location" placeholder="e.g. Yongala" list="loc-list"><datalist id="loc-list"></datalist></div>
+        <div class="form-row"><label>Site Name</label><input type="text" id="f-site" placeholder="e.g. Shark Alley" list="site-list"><datalist id="site-list"></datalist></div>
+      </div>
+      <div class="form-section">
+        <div class="section-lbl">🌊 Dive Profile</div>
+        <div class="form-row two-col">
+          <div><label>Max Depth (m) *</label><input type="number" id="f-depth" step="0.1" min="0" max="100" required placeholder="e.g. 28"></div>
+          <div><label>Bottom Time (min) *</label><input type="number" id="f-time" min="1" max="360" required placeholder="e.g. 52"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-lbl">🎓 Training &amp; Notes</div>
+        <div class="form-row"><label>Course / Training</label><input type="text" id="f-course" placeholder="e.g. DMT"></div>
+        <div class="form-row">
+          <label>Tags</label>
+          <div class="tag-grid">
+            <label class="tag-check"><input type="checkbox" id="t-night"> 🌙 Night</label>
+            <label class="tag-check"><input type="checkbox" id="t-wreck"> ⚓ Wreck</label>
+            <label class="tag-check"><input type="checkbox" id="t-nitrox"> 🟢 Nitrox</label>
+            <label class="tag-check"><input type="checkbox" id="t-deep"> 🔵 Deep</label>
+            <label class="tag-check"><input type="checkbox" id="t-survey"> 📋 Survey</label>
+            <label class="tag-check"><input type="checkbox" id="t-patrol"> 🛡️ Patrol</label>
+          </div>
+        </div>
+        <div class="form-row"><label>Comments</label><textarea id="f-comment" rows="3" placeholder="Notable sightings, conditions…"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" onclick="saveDive()">Save Dive</button>
+        <button type="button" class="btn-delete hidden" id="delete-btn" onclick="deleteDive()">Delete Dive</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- STATS -->
+  <div id="view-stats" class="view">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="header-icon">📊</span>
+        <div><div class="header-title">Stats</div><div class="header-sub">Your dive career</div></div>
+      </div>
+    </header>
+    <div id="stats-container" class="stats-container"></div>
+  </div>
+
+  <!-- DETAIL SHEET -->
+  <div id="overlay" class="overlay hidden" onclick="closeDetail()"></div>
+  <div id="detail-sheet" class="sheet hidden">
+    <div class="sheet-handle"></div>
+    <div id="detail-body"></div>
+  </div>
+
+</div>
+<script src="seed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
